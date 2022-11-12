@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+#  NOTE:  Edit the bsub variables with your information
+#
+#BSUB -W 12:00
+#BSUB -n 8
+#BSUB -M 64
+#BSUB -R rusage[mem=64]
+#BSUB -o /rsrch4/home/bcb/xxx/logs/jupyter/
+#BSUB -q medium
+#BSUB -J jupyter_conda
+#BSUB -u email@example.com
+#BSUB -B
+#BSUB -N
+
+###  DO NOT EDIT BELOW ###
+
+# Credit to Sahil Seth; This job submission script is adapted from his work for rstudio 4.0.0
+
+# example use:
+# bsub < jupyter.lsf
+# bpeek jobid
+# use the username/pwd from the bpeek jobid information
+
+
+source /rsrch4/home/bcb/wliu15/softwares/miniconda3/etc/profile.d/conda.sh
+conda activate r_v4.2.1
+
+readonly PORT=$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
+
+
+cmd="jupyter lab --port=${PORT} --ip=0.0.0.0 --host=0.0.0.0 --no-browser"
+
+
+cat 1>&2 <<END
+SSH tunnel from your workstation using the following command:
+
+   ssh -N -L 8889:${HOSTNAME}:${PORT} ${USER}@seadragon
+
+   and point your web browser to http://localhost:8889
+
+When done using Jupyter, terminate the job by:
+      bkill ${LSB_JOBID}
+END
+
+echo $cmd
+$cmd
